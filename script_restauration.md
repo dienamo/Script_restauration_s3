@@ -8,12 +8,22 @@ chemin = args.chemin
 
 import boto3
 
-mon_bucket = "monprojet4"
+import botocore
 
-mon_fichier = input ("Veuillez entrer le nom de votre fichier :")
+mon_bucket = "monprojet4"
 
 s3 = boto3.resource('s3')
 
-s3.Object(mon_bucket,mon_fichier).download_file(f'{chemin}{mon_fichier}')
 
-print("fichier restauré avec succès")
+
+mon_fichier = input("Veuillez entrer le nom de votre fichier :")
+
+try:
+
+	s3.Object(mon_bucket,mon_fichier).download_file(f'{chemin}{mon_fichier}')
+
+except botocore.exceptions.ClientError as e:
+	if e.response['Error']['Code'] == "404":
+		print("Fichier non exisant dans le bucket")
+	else:
+		raise
