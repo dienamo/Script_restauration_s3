@@ -31,6 +31,8 @@ path = args.path
 
 s3 = boto3.resource('s3')
 
+début = time.time()
+
 # On déclare la variable chemin qui va être le paramètre à renseigner au lancement du script
 if args.chemin:
 
@@ -54,4 +56,18 @@ else:
 	except botocore.exceptions.ClientError as e:
 		if e.response['Error']['Code'] == "404":
 			print("Fichier non existant dans le bucket")
+# On affiche un message indiquant la fin de la restauration			
+	print("-------------------------------------------------------------------")		
 	print(f"restauration de {nom_du_fichier} effectuée avec succès dans {path}")
+	print("-------------------------------------------------------------------")
+
+fin = time.time()
+
+# On affiche le temps de téléchargement
+print(f"Temps de téléchargement: {fin-début} secondes")
+print("----------------------------------------------")
+
+# On écrit la date et l'heure d'exécution du script dans le fichier date_exécution
+f = open("date_execution.txt","a")
+f.write(f"{mon_fichier} restauré le :{datetime.now()} en {fin-début} secondes\n")
+f.close()
