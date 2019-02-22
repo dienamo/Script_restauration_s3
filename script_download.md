@@ -5,6 +5,8 @@ import boto3
 
 import os
 
+import sys
+
 # Importation du module botocore
 import botocore
 
@@ -39,27 +41,46 @@ if args.chemin:
 	f = open(os.path.join('/home/adminsys/fichier_aws.txt')).read().splitlines()
 
 	for fichier in f:
+
 		chemin = os.path.dirname(fichier)
 		nom_du_fichier = os.path.basename(fichier)
-		s3.Object(mon_bucket,nom_du_fichier)\
-		.download_file(f'{chemin}/{nom_du_fichier}')
+		try:
+			s3.Object(mon_bucket,nom_du_fichier)\
+			.download_file(f'{chemin}/{nom_du_fichier}')
+		except botocore.exceptions.ClientError as e:
+			if e.response['Error']['Code'] == "404":
+				print(f"Fchier {nom_du_fichier} introuvable dans le bucket")
 
-	print("restauration multiple effectuée avec succès")
-
-
+		else:
+			print("Restauration multiple effectuée")
 else:
-	nom_du_fichier = input('Quel fichier voulez vous restaurer? :')
 
-	try:
+	while True:
 
-		s3.Object(mon_bucket,nom_du_fichier).download_file(f'{path}{nom_du_fichier}')
-	except botocore.exceptions.ClientError as e:
-		if e.response['Error']['Code'] == "404":
-			print("Fichier non existant dans le bucket")
-# On affiche un message indiquant la fin de la restauration			
-	print("-------------------------------------------------------------------")		
-	print(f"restauration de {nom_du_fichier} effectuée avec succès dans {path}")
-	print("-------------------------------------------------------------------")
+		nom_du_fichier = input("Quel fichier voulez vous restaurer? ('q' pour quitter): ")
+
+		try:
+
+			assert nom_du_fichier != 'q'
+
+		except AssertionError:
+
+			sys.exit()
+
+		try:
+
+			s3.Object(mon_bucket,nom_du_fichier).download_file(f'{path}{nom_du_fichier}')
+		except botocore.exceptions.ClientError as e:
+			if e.response['Error']['Code'] == "404":
+				print(f'Fichier {nom_du_fichier} non existant dans le bucket')
+				continue
+		else:
+			break
+
+# On affiche un message indiquant la fin de la restauration
+		print("-------------------------------------------------------------------")
+		print(f"restauration de {nom_du_fichier} effectuée avec succès dans {path}")
+		print("-------------------------------------------------------------------")
 
 fin = time.time()
 
@@ -69,5 +90,5 @@ print("----------------------------------------------")
 
 # On écrit la date et l'heure d'exécution du script dans le fichier date_exécution
 f = open("date_execution.txt","a")
-f.write(f"{mon_fichier} restauré le :{datetime.now()} en {fin-début} secondes\n")
+f.write(f"{nom_du_fichier} restauré le :{datetime.now()} en {fin-début} secondes\n")
 f.close()
